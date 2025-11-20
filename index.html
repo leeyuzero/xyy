@@ -1,0 +1,188 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<title>性压抑指数测试</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="description" content="匿名趣味测试：测测你到底有多压抑？30秒出结果！">
+<style>
+  body {font-family: "Microsoft YaHei", sans-serif; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); margin:0; padding:0; color:#333;}
+  .container {max-width: 660px; margin: 20px auto; background: rgba(255,255,255,0.95); border-radius: 16px; overflow:hidden; box-shadow: 0 10px 30px rgba(0,0,0,0.3);}
+  header {background:#ff6b6b; color:white; padding:30px 20px; text-align:center;}
+  header h1 {margin:0; font-size:2.2em;}
+  header p {margin:10px 0 0; opacity:0.9;}
+  .start {text-align:center; padding:40px 20px;}
+  .start button {font-size:1.4em; padding:15px 40px; background:#ff6b6b; color:white; border:none; border-radius:50px; cursor:pointer; box-shadow:0 6px 20px rgba(255,107,107,0.4);}
+  .start button:hover {background:#ff5252;}
+  .quiz {padding:20px; display:none;}
+  .question {margin-bottom:30px; background:#fafafa; padding:20px; border-radius:12px; box-shadow:0 4px 15px rgba(0,0,0,0.05);}
+  .question h3 {margin:0 0 15px; color:#333;}
+  .options label {display:block; margin:8px 0; padding:12px; background:white; border-radius:8px; cursor:pointer; transition:0.2s;}
+  .options label:hover {background:#ffe0e0;}
+  .options input[type="radio"] {margin-right:10px; transform:scale(1.2);}
+  .nav {text-align:center; margin:30px 0;}
+  .nav button {padding:12px 30px; margin:0 10px; background:#764ba2; color:white; border:none; border-radius:50px; cursor:pointer;}
+  .nav button:disabled {background:#ccc; cursor:not-allowed;}
+  .result {padding:40px 20px; text-align:center; display:none;}
+  .score {font-size:4em; font-weight:bold; color:#ff6b6b; margin:20px 0;}
+  .share {margin:30px 0;}
+  .share button {background:#4caf50; padding:10px 20px; margin:5px;}
+  footer {text-align:center; padding:20px; color:#aaa; font-size:0.9em;}
+</style>
+</head>
+<body>
+
+<div class="container">
+  <header>
+    <h1>性压抑指数测试</h1>
+    <p>匿名 · 30秒 · 纯属娱乐</p>
+  </header>
+
+  <div class="start" id="startPage">
+    <p style="font-size:1.3em; line-height:1.8;">
+      你是不是经常觉得“想又不敢”？<br>
+      15道题，测测你到底被压抑到什么程度～
+    </p>
+    <button onclick="startQuiz()">开始测试 →</button>
+  </div>
+
+  <div class="quiz" id="quiz">
+    <div id="questions"></div>
+    <div class="nav">
+      <button onclick="prevQuestion()" id="prevBtn">← 上一题</button>
+      <button onclick="nextQuestion()" id="nextBtn">下一题 →</button>
+      <button onclick="submitQuiz()" id="submitBtn" style="display:none; background:#ff6b6b;">完成测试</button>
+    </div>
+    <div style="text-align:center; margin-top:10px;">第 <span id="currentQ">1</span> / 15</div>
+  </div>
+
+  <div class="result" id="resultPage">
+    <h2>你的性压抑指数</h2>
+    <div class="score" id="score">0</div>
+    <p id="level"></p>
+    <p id="description"></p>
+    <div class="share">
+      <button onclick="restart()">再测一次</button>
+    </div>
+  </div>
+
+  <footer>
+    © 2025 纯属娱乐，请勿当真 | 仅供18岁以上成人使用
+  </footer>
+</div>
+
+<script>
+// 题目（分数：0=完全不符合 → 4=完全符合，压抑程度越高分数越高）
+const questions = [
+  "看到性感的人或画面，你会立刻转移视线或假装没看见？",
+  "跟喜欢的人独处时，你会因为害羞而找不到话题？",
+  "你很少主动谈论跟“性”相关的话题，即使朋友聊得火热？",
+  "你觉得自己“想要”的时候，会用学习/工作/运动来强行转移注意力？",
+  "你有过性幻想，但事后会觉得自己很“下流”或内疚？",
+  "你对约会、接吻、上床这些事有明确界限，且界限很保守？",
+  "你会因为担心别人觉得你“随便”而拒绝很多亲密机会？",
+  "你很少购买或使用成人用品，即使有需求也觉得丢人？",
+  "看到情侣在公开场合亲热，你会觉得“太过分了”？",
+  "你对自己的身体或性吸引力缺乏自信？",
+  "你觉得“性”是结婚以后才应该发生的事？",
+  "你经常压抑自己的性冲动，觉得那是“低级欲望”？",
+  "朋友分享性经历时，你会尴尬地笑笑然后转移话题？",
+  "你很难对伴侣直接说出自己的性需求或喜好？",
+  "你觉得自慰是“不健康”或“可怜人才做的事”？"
+];
+
+let currentQuestion = 0;
+let answers = [];
+
+function startQuiz() {
+  document.getElementById('startPage').style.display = 'none';
+  document.getElementById('quiz').style.display = 'block';
+  showQuestion();
+}
+
+function showQuestion() {
+  const qContainer = document.getElementById('questions');
+  qContainer.innerHTML = `
+    <div class="question">
+      <h3>${currentQuestion + 1}. ${questions[currentQuestion]}</h3>
+      <div class="options">
+        <label><input type="radio" name="q${currentQuestion}" value="0"> 0 - 完全不符合</label>
+        <label><input type="radio" name="q${currentQuestion}" value="1"> 1 - 比较不符合</label>
+        <label><input type="radio" name="q${currentQuestion}" value="2"> 2 - 不确定</label>
+        <label><input type="radio" name="q${currentQuestion}" value="3"> 3 - 比较符合</label>
+        <label><input type="radio" name="q${currentQuestion}" value="4"> 4 - 完全符合</label>
+      </div>
+    </div>
+  `;
+  // 恢复之前答案
+  if (answers[currentQuestion] !== undefined) {
+    document.querySelector(`input[value="${answers[currentQuestion]}"]`).checked = true;
+  }
+  document.getElementById('currentQ').textContent = currentQuestion + 1;
+  document.getElementById('prevBtn').disabled = currentQuestion === 0;
+  document.getElementById('submitBtn').style.display = currentQuestion === questions.length - 1 ? 'inline-block' : 'none';
+  document.getElementById('nextBtn').style.display = currentQuestion === questions.length - 1 ? 'none' : 'inline-block';
+}
+
+function nextQuestion() {
+  const selected = document.querySelector(`input[name="q${currentQuestion}"]:checked`);
+  if (!selected) { alert("请选一个选项哦~"); return; }
+  answers[currentQuestion] = parseInt(selected.value);
+  currentQuestion++;
+  if (currentQuestion < questions.length) {
+    showQuestion();
+  }
+}
+
+function prevQuestion() {
+  if (currentQuestion > 0) {
+    const selected = document.querySelector(`input[name="q${currentQuestion}"]:checked`);
+    if (selected) answers[currentQuestion] = parseInt(selected.value);
+    currentQuestion--;
+    showQuestion();
+  }
+}
+
+function submitQuiz() {
+  const lastSelected = document.querySelector(`input[name="q${currentQuestion}"]:checked`);
+  if (!lastSelected) { alert("请选一个选项哦~"); return; }
+  answers[currentQuestion] = parseInt(lastSelected.value);
+
+  // 计算总分（满分 15*4=60）
+  const total = answers.reduce((a,b)=>a+b, 0);
+  const percentage = Math.round((total / 60) * 100);
+
+  let level = "", desc = "";
+  if (percentage <= 20) {
+    level = "性解放大师";
+    desc = "你完全不压抑！活得通透，想爱就爱，想说就说，简直是人间清醒代表。";
+  } else if (percentage <= 40) {
+    level = "轻度压抑";
+    desc = "偶尔会害羞，但总体还算开放。稍微放开一点，你会更快乐哦~";
+  } else if (percentage <= 60) {
+    level = "中度压抑";
+    desc = "你内心其实很渴望，但总是被“应该怎样”的观念绑架。试着对自己温柔一点吧。";
+  } else if (percentage <= 80) {
+    level = "重度压抑";
+    desc = "你把欲望锁得死死的，连自己都快忘了还有这回事。建议找个安全的方式慢慢释放，否则容易爆炸！";
+  } else {
+    level = "性压抑核弹级";
+    desc = "恭喜你获得“当代苦行僧”称号！再压抑下去可能要升华成仙了😂 赶紧找个信任的人聊聊，或者专业咨询吧！";
+  }
+
+  document.getElementById('quiz').style.display = 'none';
+  document.getElementById('resultPage').style.display = 'block';
+  document.getElementById('score').textContent = percentage;
+  document.getElementById('level').textContent = level;
+  document.getElementById('description').textContent = desc;
+}
+
+function restart() {
+  currentQuestion = 0;
+  answers = [];
+  document.getElementById('resultPage').style.display = 'none';
+  document.getElementById('startPage').style.display = 'block';
+}
+</script>
+</body>
+</html>
